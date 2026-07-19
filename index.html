@@ -19,8 +19,8 @@
   <main id="app" class="app">
     <section class="panel editor-panel">
       <div class="ai-row">
-        <input id="nl" type="text" placeholder='Describe a strategy: "buy the dip", "momentum", "golden cross"…' />
-        <button id="translate" title="Translate to StratLang">✨ Translate</button>
+        <input id="nl" type="text" placeholder='Describe a strategy: "buy the dip", "ride winners but ease off when frothy"…' />
+        <button id="translate" title="Classify with the trained neural net">🧠 Translate</button>
       </div>
       <div class="ai-note" id="aiNote"></div>
 
@@ -59,6 +59,7 @@ otherwise flat</textarea>
         <span><i class="dot blue"></i> buy &amp; hold</span>
         <span id="asof" class="asof"></span>
       </div>
+      <div id="dataSource" class="datasrc"></div>
     </section>
   </main>
 
@@ -68,6 +69,7 @@ otherwise flat</textarea>
   </footer>
 
   <script src="data.js"></script>
+  <script src="model.js"></script>
   <script src="engine.js"></script>
   <script src="translate.js"></script>
   <script src="app.js"></script>

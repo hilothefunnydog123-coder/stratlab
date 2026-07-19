@@ -94,6 +94,7 @@ canvas { width: 100%; height: auto; background: #0a0e16; border: 1px solid var(-
 .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; vertical-align: middle; margin-right: 5px; }
 .dot.green { background: var(--green); } .dot.blue { background: var(--blue); }
 .asof { margin-left: auto; color: #57606a; }
+.datasrc { margin-top: 8px; font-size: 0.78rem; color: #57606a; }
 
 .foot { text-align: center; color: var(--dim); font-size: 0.86rem; padding: 30px 20px 50px; border-top: 1px solid var(--border); max-width: 800px; margin: 0 auto; }
 .foot a { color: var(--blue); }

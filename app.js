@@ -3,6 +3,14 @@
 
 const $ = (id) => document.getElementById(id);
 const DATA = window.MARKET_DATA;
+const META = window.MARKET_META || { source: 'unknown' };
+
+// honest data-source badge — real data carries an as-of date; sample data doesn't
+{
+  const real = !!META.asof;
+  $('dataSource').innerHTML = `${real ? '🟢' : '🟡'} Data: ${META.source}` +
+    (real ? ` · as of ${META.asof}` : '');
+}
 
 // populate ticker dropdown
 const tickerSel = $('ticker');
@@ -97,9 +105,10 @@ function run() {
 function doTranslate() {
   const out = window.translate($('nl').value);
   $('code').value = out.code;
+  const pct = Math.round(out.confidence * 100);
   $('aiNote').textContent = out.matched
-    ? `✨ Matched: ${out.name} — generated StratLang below. Edit it, then Backtest.`
-    : `✨ No exact match — starting you with ${out.name}. Edit it, then Backtest.`;
+    ? `🧠 Neural net → ${out.name} (${pct}% confidence). Edit the StratLang below, then Backtest.`
+    : `🧠 Low confidence (${pct}%) — best guess is ${out.name}. Try rephrasing, or edit below.`;
   run();
 }
 

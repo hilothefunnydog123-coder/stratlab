@@ -1,66 +1,69 @@
-/* Plain-English -> StratLang translator.
+/* eslint-disable */
+(function () {
+/* Plain-English -> StratLang, powered by a trained neural net.
  *
- * DEMO IMPLEMENTATION: a deterministic, rules-based intent matcher — no API
- * key, no network, works offline, and is perfectly reproducible for a live
- * demo. In production this is where an LLM slots in (the rest of the app is
- * unchanged: it just needs valid StratLang text back). That swap is one
- * function. */
+ * Runs the MLP from ml/train.py (window.STRAT_MODEL) as a forward pass in the
+ * browser: bag-of-words -> ReLU(24) -> softmax over strategy intents. No API,
+ * no network, no LLM — a real classifier trained from scratch that generalizes
+ * to phrasings it never saw. It maps a description to one of N strategy
+ * templates (it does not generate novel code — that's an LLM's job). */
 'use strict';
 
-const PATTERNS = [
-  {
-    match: /(golden cross|moving average cross|ma cross|trend follow|when.*above.*average)/i,
-    name: 'trend following (golden cross)',
-    code: 'when sma(20) > sma(100) then long\notherwise flat',
-  },
-  {
-    match: /(buy the dip|buy dips|mean reversion|revert|oversold bounce|dip)/i,
-    name: 'mean reversion (buy the dip)',
-    code: 'when price() < sma(20) * 0.95 then long\nwhen price() > sma(20) then flat\notherwise flat',
-  },
-  {
-    match: /(momentum|winners|whats going up|what is going up|riding)/i,
-    name: 'time-series momentum',
-    code: 'when momentum(126) > 0 then long\notherwise flat',
-  },
-  {
-    match: /(rsi|overbought|relative strength)/i,
-    name: 'RSI reversal',
-    code: 'when rsi(14) < 30 then long\nwhen rsi(14) > 70 then flat\notherwise flat',
-  },
-  {
-    match: /(breakout|new high|52 week|highest)/i,
-    name: 'breakout (new highs)',
-    code: 'when price() >= highest(55) then long\nwhen price() < sma(50) then flat\notherwise flat',
-  },
-  {
-    match: /(low vol|calm|avoid volatility|quiet)/i,
-    name: 'trend + volatility filter',
-    code: 'when sma(20) > sma(100) and volatility(20) < 0.02 then long\notherwise flat',
-  },
-  {
-    match: /(cautious|careful|risk off|protect|defensive)/i,
-    name: 'cautious momentum',
-    code: 'when momentum(126) > 0 and rsi(14) > 75 then flat\nwhen momentum(126) > 0 then long\notherwise flat',
-  },
-  {
-    match: /(buy.*hold|hold forever|just buy|passive)/i,
-    name: 'buy & hold',
-    code: 'when price() > 0 then long\notherwise long',
-  },
-];
+const CONFIDENCE_FLOOR = 0.35;
+
+function tokenize(text) {
+  return (text.toLowerCase().match(/[a-z0-9]+/g)) || [];
+}
+
+function featurize(text, vocab) {
+  const x = new Float64Array(Object.keys(vocab).length);
+  for (const w of tokenize(text)) {
+    if (w in vocab) x[vocab[w]] = 1;
+  }
+  return x;
+}
+
+function forward(x, m) {
+  const h = m.b1.length, k = m.b2.length, d = x.length;
+  // hidden: a1 = relu(x·W1 + b1)
+  const a1 = new Float64Array(h);
+  for (let j = 0; j < h; j++) {
+    let s = m.b1[j];
+    for (let i = 0; i < d; i++) if (x[i]) s += x[i] * m.W1[i][j];
+    a1[j] = s > 0 ? s : 0;
+  }
+  // logits = a1·W2 + b2
+  const z = new Float64Array(k);
+  let max = -Infinity;
+  for (let c = 0; c < k; c++) {
+    let s = m.b2[c];
+    for (let j = 0; j < h; j++) s += a1[j] * m.W2[j][c];
+    z[c] = s;
+    if (s > max) max = s;
+  }
+  // softmax
+  let sum = 0;
+  for (let c = 0; c < k; c++) { z[c] = Math.exp(z[c] - max); sum += z[c]; }
+  let best = 0;
+  for (let c = 0; c < k; c++) { z[c] /= sum; if (z[c] > z[best]) best = c; }
+  return { label: m.labels[best], confidence: z[best] };
+}
 
 function translate(text) {
+  const m = window.STRAT_MODEL;
   const t = (text || '').trim();
-  for (const p of PATTERNS) {
-    if (p.match.test(t)) return { code: p.code, name: p.name, matched: true };
+  if (!m || t.length === 0) {
+    return { code: 'when sma(20) > sma(100) then long\notherwise flat', name: 'trend following (default)', confidence: 0, matched: false };
   }
-  // sensible default so the demo never dead-ends
+  const { label, confidence } = forward(featurize(t, m.vocab), m);
   return {
-    code: 'when sma(20) > sma(100) then long\notherwise flat',
-    name: 'trend following (default)',
-    matched: false,
+    code: m.templates[label],
+    name: m.names[label],
+    confidence,
+    matched: confidence >= CONFIDENCE_FLOOR,
   };
 }
 
 window.translate = translate;
+
+})();

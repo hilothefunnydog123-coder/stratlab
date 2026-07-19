@@ -1,3 +1,5 @@
+/* eslint-disable */
+(function () {
 /* StratLab quant engine — a browser port of the quantlang parser + quantsim
  * backtester. Same design principles as the Python originals:
  *   - recursive-descent parser with real precedence
@@ -260,3 +262,5 @@ function metrics(equity, bench, weights) {
 }
 
 window.StratLab = { compile, backtest, parse, tokenize };
+
+})();

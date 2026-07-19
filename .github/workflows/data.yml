@@ -1,0 +1,38 @@
+# Fetches real daily market prices and commits data.js, so StratLab runs on
+# real market history with no backend and no exposed API key.
+name: data
+
+on:
+  schedule:
+    - cron: "30 22 * * 1-5" # after the US close on weekdays
+  workflow_dispatch: {}
+  push:
+    branches: [main]
+    paths:
+      - scripts/fetch_data.py
+      - .github/workflows/data.yml
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install yfinance
+        run: pip install yfinance
+      - name: Fetch real prices
+        env:
+          FINNHUB_TOKEN: ${{ secrets.FINNHUB_TOKEN }} # optional fallback
+        run: python scripts/fetch_data.py
+      - name: Commit if changed
+        run: |
+          git config user.name "hilothefunnydog123-coder"
+          git config user.email "229661712+hilothefunnydog123-coder@users.noreply.github.com"
+          git add data.js
+          git diff --cached --quiet || git commit -m "data: refresh real market prices"
+          git push
