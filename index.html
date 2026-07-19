@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StratLab — backtest a trading idea as fast as you can describe it</title>
+  <meta name="description" content="Write a trading strategy in plain English, backtest it in your browser instantly. No code, no setup." />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="hero">
+    <div class="brand">📊 <span>StratLab</span></div>
+    <h1>Backtest a trading idea as fast as you can <span class="grad">describe it.</span></h1>
+    <p class="sub">Type a strategy in plain English — or write it in StratLang — and watch it backtest on historical data, live, in your browser. No account. No code. No setup.</p>
+    <a class="cta" href="#app">Try it now ↓</a>
+    <p class="disclaimer">Educational simulation on sample data — not investment advice.</p>
+  </header>
+
+  <main id="app" class="app">
+    <section class="panel editor-panel">
+      <div class="ai-row">
+        <input id="nl" type="text" placeholder='Describe a strategy: "buy the dip", "momentum", "golden cross"…' />
+        <button id="translate" title="Translate to StratLang">✨ Translate</button>
+      </div>
+      <div class="ai-note" id="aiNote"></div>
+
+      <label class="lbl">Strategy <span class="mono-hint">(StratLang)</span></label>
+      <textarea id="code" spellcheck="false">when sma(20) > sma(100) then long
+otherwise flat</textarea>
+
+      <div class="controls">
+        <select id="ticker" title="Sample series"></select>
+        <button id="run" class="run">▶ Backtest</button>
+      </div>
+      <div id="error" class="error"></div>
+
+      <details class="cheat">
+        <summary>StratLang cheat sheet</summary>
+        <div class="cheat-body">
+          <p><b>Shape:</b> one or more <code>when &lt;condition&gt; then &lt;action&gt;</code> lines, ending in <code>otherwise &lt;action&gt;</code>. First match wins.</p>
+          <p><b>Actions:</b> <code>long</code> · <code>short</code> · <code>flat</code> · any number (<code>0.5</code> = half invested)</p>
+          <p><b>Indicators:</b> <code>price()</code> · <code>sma(n)</code> · <code>ema(n)</code> · <code>rsi(n)</code> · <code>momentum(n)</code> · <code>highest(n)</code> · <code>lowest(n)</code> · <code>volatility(n)</code></p>
+          <p><b>Operators:</b> <code>&gt; &lt; &gt;= &lt;= == !=</code> · <code>and or not</code> · <code>+ - * /</code></p>
+          <p class="examples">
+            <button class="ex" data-code="when sma(20) > sma(100) then long&#10;otherwise flat">Golden cross</button>
+            <button class="ex" data-code="when price() < sma(20) * 0.95 then long&#10;when price() > sma(20) then flat&#10;otherwise flat">Buy the dip</button>
+            <button class="ex" data-code="when momentum(126) > 0 and rsi(14) > 75 then flat&#10;when momentum(126) > 0 then long&#10;otherwise flat">Cautious momentum</button>
+            <button class="ex" data-code="when price() >= highest(55) then long&#10;when price() < sma(50) then flat&#10;otherwise flat">Breakout</button>
+          </p>
+        </div>
+      </details>
+    </section>
+
+    <section class="panel result-panel">
+      <div class="metrics" id="metrics"></div>
+      <canvas id="chart" width="720" height="320"></canvas>
+      <div class="legend">
+        <span><i class="dot green"></i> your strategy</span>
+        <span><i class="dot blue"></i> buy &amp; hold</span>
+        <span id="asof" class="asof"></span>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <p>Built on a hand-written parser + a no-lookahead backtesting engine — the same design as <a href="https://github.com/hilothefunnydog123-coder/quantlang">quantlang</a> and <a href="https://github.com/hilothefunnydog123-coder/quantsim">quantsim</a>, ported to run entirely in your browser.</p>
+    <p class="fine">Sample data is simulated. Real-money trading is never offered — StratLab is a research &amp; learning tool. © hilothefunnydog123-coder</p>
+  </footer>
+
+  <script src="data.js"></script>
+  <script src="engine.js"></script>
+  <script src="translate.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
